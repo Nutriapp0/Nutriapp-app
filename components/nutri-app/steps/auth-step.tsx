@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
 import { useUser } from "../context/user-context"
+import { ForgotPasswordStep } from "./forgot-password-step"
 
 interface AuthStepProps {
   onNext: () => void
@@ -17,6 +18,7 @@ export function AuthStep({ onNext }: AuthStepProps) {
   const { login } = useUser()
   const [showPassword, setShowPassword] = useState(false)
   const [activeTab, setActiveTab] = useState("login")
+  const [showForgot, setShowForgot] = useState(false)
   
   // Login form state
   const [loginEmail, setLoginEmail] = useState("")
@@ -53,6 +55,14 @@ export function AuthStep({ onNext }: AuthStepProps) {
       })
       onNext()
     }
+  }
+
+  if (showForgot) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <ForgotPasswordStep onBack={() => setShowForgot(false)} />
+      </div>
+    )
   }
 
   return (
@@ -132,6 +142,7 @@ export function AuthStep({ onNext }: AuthStepProps) {
                 
                 <button
                   type="button"
+                  onClick={() => setShowForgot(true)}
                   className="text-sm text-primary hover:underline"
                 >
                   ¿Olvidaste tu contraseña?
