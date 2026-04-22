@@ -1,12 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Shield, FileText } from "lucide-react"
+import { Shield, FileText, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { useUser } from "../context/user-context"
+import { apiPostConsent } from "@/lib/api"
 
 interface ConsentStepProps {
   onNext: () => void
@@ -14,12 +16,23 @@ interface ConsentStepProps {
 }
 
 export function ConsentStep({ onNext, onCancel }: ConsentStepProps) {
+  const { token } = useUser()
   const [accepted, setAccepted] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (accepted) {
+    if (!accepted || !token) return
+    setError("")
+    setIsLoading(true)
+    try {
+      await apiPostConsent(token)
       onNext()
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al guardar el consentimiento")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -143,20 +156,28 @@ export function ConsentStep({ onNext, onCancel }: ConsentStepProps) {
             </div>
 
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              {error && (
+                <div className="flex w-full items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
+                  <p className="text-xs text-destructive">{error}</p>
+                </div>
+              )}
               <Button
                 type="button"
                 variant="ghost"
                 onClick={onCancel}
+                disabled={isLoading}
                 className="text-muted-foreground hover:bg-secondary hover:text-foreground"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
-                disabled={!accepted}
+                disabled={!accepted || isLoading}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
-                Aceptar y Continuar
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {isLoading ? "Guardando..." : "Aceptar y Continuar"}
               </Button>
             </div>
           </form>

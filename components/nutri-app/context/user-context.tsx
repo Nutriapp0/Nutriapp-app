@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, ReactNode } from "react"
+import { apiLogout } from "@/lib/api"
 
 export interface UserProfile {
   id: string
@@ -32,13 +33,15 @@ export interface Assessment {
   riskLevel: "bajo" | "moderado" | "alto"
   classification: string
   nObeyesdad: string
+  diagnostico?: string
 }
 
 interface UserContextType {
   user: UserProfile | null
+  token: string | null
   assessments: Assessment[]
   isLoggedIn: boolean
-  login: (profile: UserProfile) => void
+  login: (profile: UserProfile, token: string) => void
   logout: () => void
   addAssessment: (assessment: Omit<Assessment, "id" | "date">) => void
 }
@@ -47,14 +50,18 @@ const UserContext = createContext<UserContextType | undefined>(undefined)
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null)
+  const [token, setToken] = useState<string | null>(null)
   const [assessments, setAssessments] = useState<Assessment[]>([])
 
-  const login = (profile: UserProfile) => {
+  const login = (profile: UserProfile, authToken: string) => {
     setUser(profile)
+    setToken(authToken)
   }
 
   const logout = () => {
+    if (token) apiLogout(token)
     setUser(null)
+    setToken(null)
     setAssessments([])
   }
 
@@ -71,6 +78,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     <UserContext.Provider
       value={{
         user,
+        token,
         assessments,
         isLoggedIn: !!user,
         login,

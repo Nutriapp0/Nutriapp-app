@@ -118,6 +118,7 @@ function NutriWizardContent() {
     riskLevel: "bajo" | "moderado" | "alto"
     classification: string
     nObeyesdad: string
+    diagnostico?: string
   }) => {
     // Save the assessment to user profile
     addAssessment({

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, EyeOff, Mail, Lock, User, BadgeCheck } from "lucide-react"
+import { Eye, EyeOff, Mail, Lock, User, BadgeCheck, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
 import { useUser } from "../context/user-context"
 import { ForgotPasswordStep } from "./forgot-password-step"
+import { apiLogin, apiRegister } from "@/lib/api"
 
 interface AuthStepProps {
   onNext: () => void
@@ -19,41 +20,48 @@ export function AuthStep({ onNext }: AuthStepProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [activeTab, setActiveTab] = useState("login")
   const [showForgot, setShowForgot] = useState(false)
-  
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+
   // Login form state
   const [loginEmail, setLoginEmail] = useState("")
   const [loginPassword, setLoginPassword] = useState("")
-  
+
   // Register form state
   const [registerName, setRegisterName] = useState("")
   const [registerCode, setRegisterCode] = useState("")
   const [registerEmail, setRegisterEmail] = useState("")
   const [registerPassword, setRegisterPassword] = useState("")
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (loginEmail && loginPassword) {
-      // Simulate login - in production this would validate with backend
-      login({
-        id: Date.now().toString(),
-        nombre: loginEmail.split("@")[0].replace(".", " "),
-        codigo: "2024" + Math.random().toString().slice(2, 8),
-        email: loginEmail,
-      })
+    if (!loginEmail || !loginPassword) return
+    setError("")
+    setIsLoading(true)
+    try {
+      const { user, token } = await apiLogin(loginEmail, loginPassword)
+      login(user, token)
       onNext()
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al iniciar sesión")
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (registerName && registerCode && registerEmail && registerPassword) {
-      login({
-        id: Date.now().toString(),
-        nombre: registerName,
-        codigo: registerCode,
-        email: registerEmail,
-      })
+    if (!registerName || !registerCode || !registerEmail || !registerPassword) return
+    setError("")
+    setIsLoading(true)
+    try {
+      const { user, token } = await apiRegister(registerName, registerCode, registerEmail, registerPassword)
+      login(user, token)
       onNext()
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al crear la cuenta")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -77,7 +85,13 @@ export function AuthStep({ onNext }: AuthStepProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          {error && (
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3">
+              <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
+          <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setError("") }} className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-secondary">
               <TabsTrigger
                 value="login"
@@ -150,9 +164,11 @@ export function AuthStep({ onNext }: AuthStepProps) {
                 
                 <Button
                   type="submit"
+                  disabled={isLoading}
                   className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200"
                 >
-                  Ingresar
+                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {isLoading ? "Ingresando..." : "Ingresar"}
                 </Button>
               </form>
             </TabsContent>
@@ -240,9 +256,11 @@ export function AuthStep({ onNext }: AuthStepProps) {
                 
                 <Button
                   type="submit"
+                  disabled={isLoading}
                   className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200"
                 >
-                  Crear cuenta
+                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {isLoading ? "Creando cuenta..." : "Crear cuenta"}
                 </Button>
               </form>
             </TabsContent>
