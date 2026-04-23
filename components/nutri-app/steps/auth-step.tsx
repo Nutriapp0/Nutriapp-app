@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, EyeOff, Mail, Lock, User, BadgeCheck, Loader2, AlertCircle } from "lucide-react"
+import { Eye, EyeOff, Mail, Lock, User, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -29,7 +29,6 @@ export function AuthStep({ onNext }: AuthStepProps) {
 
   // Register form state
   const [registerName, setRegisterName] = useState("")
-  const [registerCode, setRegisterCode] = useState("")
   const [registerEmail, setRegisterEmail] = useState("")
   const [registerPassword, setRegisterPassword] = useState("")
 
@@ -51,11 +50,11 @@ export function AuthStep({ onNext }: AuthStepProps) {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!registerName || !registerCode || !registerEmail || !registerPassword) return
+    if (!registerName || !registerEmail || !registerPassword) return
     setError("")
     setIsLoading(true)
     try {
-      const { user, token } = await apiRegister(registerName, registerCode, registerEmail, registerPassword)
+      const { user, token } = await apiRegister(registerName, registerEmail, registerPassword)
       login(user, token)
       onNext()
     } catch (err: unknown) {
@@ -187,23 +186,6 @@ export function AuthStep({ onNext }: AuthStepProps) {
                       placeholder="Juan Pérez García"
                       value={registerName}
                       onChange={(e) => setRegisterName(e.target.value)}
-                      className="bg-input pl-10 text-foreground placeholder:text-muted-foreground focus:ring-primary"
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="register-code" className="text-foreground">
-                    Código estudiantil
-                  </Label>
-                  <div className="relative">
-                    <BadgeCheck className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="register-code"
-                      type="text"
-                      placeholder="2024001234"
-                      value={registerCode}
-                      onChange={(e) => setRegisterCode(e.target.value)}
                       className="bg-input pl-10 text-foreground placeholder:text-muted-foreground focus:ring-primary"
                     />
                   </div>

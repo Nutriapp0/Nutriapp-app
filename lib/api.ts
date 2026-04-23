@@ -10,7 +10,6 @@ const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"
 export interface ApiUser {
   id: string
   nombre: string
-  codigo: string
   email: string
 }
 
@@ -73,13 +72,12 @@ async function request<T>(
 
 export async function apiRegister(
   nombre: string,
-  codigo: string,
   email: string,
   password: string
 ): Promise<AuthResponse> {
   return request<AuthResponse>("/auth/register", {
     method: "POST",
-    body: JSON.stringify({ nombre, codigo, email, password }),
+    body: JSON.stringify({ nombre, email, password }),
   })
 }
 

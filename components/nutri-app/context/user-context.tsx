@@ -6,7 +6,6 @@ import { apiLogout } from "@/lib/api"
 export interface UserProfile {
   id: string
   nombre: string
-  codigo: string
   email: string
 }
 
