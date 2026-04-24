@@ -13,7 +13,7 @@ import { apiLogin, apiRegister } from "@/lib/api"
 import { toast } from "sonner"
 
 interface AuthStepProps {
-  onNext: () => void
+  onNext: (token: string) => void
 }
 
 export function AuthStep({ onNext }: AuthStepProps) {
@@ -43,7 +43,7 @@ export function AuthStep({ onNext }: AuthStepProps) {
       const { user, token } = await apiLogin(loginEmail, loginPassword)
       toast.success(`¡Bienvenido, ${user.nombre}!`)
       login(user, token)
-      onNext()
+      onNext(token)
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Error al iniciar sesión")
     } finally {
@@ -66,7 +66,7 @@ export function AuthStep({ onNext }: AuthStepProps) {
       const { user, token } = await apiRegister(registerName, registerEmail, registerPassword)
       toast.success(`¡Cuenta creada! Bienvenido, ${user.nombre}`)
       login(user, token)
-      onNext()
+      onNext(token)
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Error al crear la cuenta")
     } finally {

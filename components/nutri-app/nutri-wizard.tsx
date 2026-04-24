@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { UserProvider, useUser } from "./context/user-context"
 import { Header } from "./header"
 import { WelcomeStep } from "./steps/welcome-step"
@@ -67,10 +67,11 @@ function NutriWizardContent() {
   }
 
   // After login, check consent before showing profile
-  const handleLoginSuccess = async () => {
-    if (token) {
+  const handleLoginSuccess = async (authToken: string) => {
+    const tokenToUse = authToken || token
+    if (tokenToUse) {
       try {
-        const { exists } = await apiGetConsent(token)
+        const { exists } = await apiGetConsent(tokenToUse)
         setNeedsConsent(!exists)
         setShowProfile(exists)
       } catch {
