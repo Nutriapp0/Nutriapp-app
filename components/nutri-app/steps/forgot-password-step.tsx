@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { ArrowLeft, Mail, KeyRound, Lock, Eye, EyeOff, CheckCircle2, RefreshCw } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -38,6 +39,7 @@ export function ForgotPasswordStep({ onBack }: ForgotPasswordStepProps) {
     if (!email) { setEmailError("Ingresa tu correo institucional"); return }
     if (!/\S+@\S+\.\S+/.test(email)) { setEmailError("Correo inválido"); return }
     setEmailError("")
+    toast.success(`Código enviado a ${email}`)
     setFrame("code")
     startResendTimer()
   }
@@ -72,8 +74,8 @@ export function ForgotPasswordStep({ onBack }: ForgotPasswordStepProps) {
     e.preventDefault()
     const joined = code.join("")
     if (joined.length < 6) { setCodeError("Ingresa el código completo de 6 dígitos"); return }
-    // Simulate: accept any 6-digit code
     setCodeError("")
+    toast.success("Código verificado correctamente")
     setFrame("newPassword")
   }
 
@@ -82,6 +84,7 @@ export function ForgotPasswordStep({ onBack }: ForgotPasswordStepProps) {
     if (newPassword.length < 8) { setPasswordError("La contraseña debe tener al menos 8 caracteres"); return }
     if (newPassword !== confirmPassword) { setPasswordError("Las contraseñas no coinciden"); return }
     setPasswordError("")
+    toast.success("¡Contraseña restablecida exitosamente!")
     setFrame("success")
   }
 

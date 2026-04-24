@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, EyeOff, Mail, Lock, User, Loader2, AlertCircle } from "lucide-react"
+import { Eye, EyeOff, Mail, Lock, User, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { useUser } from "../context/user-context"
 import { ForgotPasswordStep } from "./forgot-password-step"
 import { apiLogin, apiRegister } from "@/lib/api"
+import { toast } from "sonner"
 
 interface AuthStepProps {
   onNext: () => void
@@ -21,7 +22,6 @@ export function AuthStep({ onNext }: AuthStepProps) {
   const [activeTab, setActiveTab] = useState("login")
   const [showForgot, setShowForgot] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("")
@@ -34,15 +34,18 @@ export function AuthStep({ onNext }: AuthStepProps) {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!loginEmail || !loginPassword) return
-    setError("")
+    if (!loginEmail || !loginPassword) {
+      toast.error("Completa todos los campos")
+      return
+    }
     setIsLoading(true)
     try {
       const { user, token } = await apiLogin(loginEmail, loginPassword)
+      toast.success(`¡Bienvenido, ${user.nombre}!`)
       login(user, token)
       onNext()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error al iniciar sesión")
+      toast.error(err instanceof Error ? err.message : "Error al iniciar sesión")
     } finally {
       setIsLoading(false)
     }
@@ -50,15 +53,22 @@ export function AuthStep({ onNext }: AuthStepProps) {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!registerName || !registerEmail || !registerPassword) return
-    setError("")
+    if (!registerName || !registerEmail || !registerPassword) {
+      toast.error("Completa todos los campos")
+      return
+    }
+    if (registerPassword.length < 8) {
+      toast.error("La contraseña debe tener al menos 8 caracteres")
+      return
+    }
     setIsLoading(true)
     try {
       const { user, token } = await apiRegister(registerName, registerEmail, registerPassword)
+      toast.success(`¡Cuenta creada! Bienvenido, ${user.nombre}`)
       login(user, token)
       onNext()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error al crear la cuenta")
+      toast.error(err instanceof Error ? err.message : "Error al crear la cuenta")
     } finally {
       setIsLoading(false)
     }
@@ -84,13 +94,7 @@ export function AuthStep({ onNext }: AuthStepProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {error && (
-            <div className="mb-4 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3">
-              <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
-              <p className="text-sm text-destructive">{error}</p>
-            </div>
-          )}
-          <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setError("") }} className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-secondary">
               <TabsTrigger
                 value="login"
