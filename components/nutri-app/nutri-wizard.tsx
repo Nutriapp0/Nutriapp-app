@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { UserProvider, useUser } from "./context/user-context"
 import { Header } from "./header"
 import { WelcomeStep } from "./steps/welcome-step"
@@ -66,13 +66,23 @@ function NutriWizardContent() {
     }
   }
 
-  const handleLoginSuccess = () => {
-    // After login, show profile
-    setShowProfile(true)
+  // After login, check consent before showing profile
+  const handleLoginSuccess = async () => {
+    if (token) {
+      try {
+        const { exists } = await apiGetConsent(token)
+        setNeedsConsent(!exists)
+        setShowProfile(exists)
+      } catch {
+        setNeedsConsent(true)
+        setShowProfile(false)
+      }
+    } else {
+      setShowProfile(true)
+    }
   }
 
-  const handleStartNewAssessment = async () => {
-    // Check if user has consent before starting assessment
+  const handleStartNewAssessment = () => {
     setShowProfile(false)
     setIsNewAssessment(true)
     setCurrentStep(1)
@@ -82,15 +92,6 @@ function NutriWizardContent() {
       caec: "", smoke: "", ch2o: "", scc: "",
       faf: "", tue: "", calc: "", mtrans: "",
     })
-    // Verify consent in backend
-    if (token) {
-      try {
-        const { exists } = await apiGetConsent(token)
-        setNeedsConsent(!exists)
-      } catch {
-        setNeedsConsent(true)
-      }
-    }
   }
 
   const goToNextStep = () => {
@@ -169,6 +170,21 @@ function NutriWizardContent() {
     )
   }
 
+  // Show consent step immediately after login/registration if needed
+  if (needsConsent && isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <Header onProfileClick={() => {}} />
+        <main className="container mx-auto px-4 py-8 max-w-4xl">
+          <ConsentStep
+            onNext={() => { setNeedsConsent(false); setShowProfile(true); }}
+            onCancel={() => { setNeedsConsent(false); setShowProfile(false); }}
+          />
+        </main>
+      </div>
+    )
+  }
+
   // Show profile dashboard for logged in users
   if (showProfile && isLoggedIn) {
     return (
@@ -184,22 +200,15 @@ function NutriWizardContent() {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <Header onProfileClick={() => { setShowProfile(true); setIsNewAssessment(false); }} />
-        
         <main className="container mx-auto px-4 py-8 max-w-4xl">
-          {needsConsent && (
-            <ConsentStep
-              onNext={() => setNeedsConsent(false)}
-              onCancel={() => { setShowProfile(true); setIsNewAssessment(false); }}
-            />
-          )}
-          {!needsConsent && currentStep === 1 && (
+          {currentStep === 1 && (
             <DataCaptureStep
               userData={userData}
               setUserData={setUserData}
               onNext={goToNextStep}
             />
           )}
-          {!needsConsent && currentStep === 2 && (
+          {currentStep === 2 && (
             <ResultsStep userData={userData} onSaveResults={handleSaveResults} />
           )}
         </main>

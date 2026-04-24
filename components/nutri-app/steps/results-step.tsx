@@ -107,7 +107,13 @@ export function ResultsStep({ userData, onSaveResults }: ResultsStepProps) {
     riskLevel: "moderado" as RiskLevel,
   }
 
-  const risk = riskConfig[result?.nivelRiesgo ?? riskLevel]
+  let risk = riskConfig[result?.nivelRiesgo ?? riskLevel]
+  if (!risk) {
+    // Defensive fallback: log unexpected value and use 'moderado' as default
+    const nivel = result?.nivelRiesgo ?? riskLevel
+    console.warn("[ResultsStep] nivelRiesgo inesperado:", nivel)
+    risk = riskConfig["moderado"]
+  }
   const RiskIcon = risk.icon
   const displayImc = result?.imc ?? imc
 

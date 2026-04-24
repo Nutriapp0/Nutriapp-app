@@ -149,14 +149,23 @@ export function ProfileStep({ onNewAssessment, onLogout }: ProfileStepProps) {
 
             <Card className="border-border bg-card">
               <CardContent className="flex items-center gap-4 p-4">
-                <div className={cn(
-                  "flex h-12 w-12 items-center justify-center rounded-lg",
-                  riskColors[latestAssessment.riskLevel].bg
-                )}>
-                  <Activity className={cn("h-6 w-6", riskColors[latestAssessment.riskLevel].text)} />
-                </div>
+                {(() => {
+                  const risk = riskColors[latestAssessment.riskLevel]
+                  if (!risk) {
+                    console.warn("[ProfileStep] riskLevel inesperado:", latestAssessment.riskLevel)
+                  }
+                  const safeRisk = risk || riskColors["moderado"]
+                  return (
+                    <div className={cn(
+                      "flex h-12 w-12 items-center justify-center rounded-lg",
+                      safeRisk.bg
+                    )}>
+                      <Activity className={cn("h-6 w-6", safeRisk.text)} />
+                    </div>
+                  )
+                })()}
                 <div>
-                  <p className={cn("text-lg font-bold capitalize", riskColors[latestAssessment.riskLevel].text)}>
+                  <p className={cn("text-lg font-bold capitalize", (riskColors[latestAssessment.riskLevel] || riskColors["moderado"]).text)}>
                     {latestAssessment.riskLevel}
                   </p>
                   <p className="text-xs text-muted-foreground">Nivel de Riesgo</p>
@@ -254,8 +263,11 @@ export function ProfileStep({ onNewAssessment, onLogout }: ProfileStepProps) {
               {assessments.map((assessment, index) => {
                 const prevAssessment = assessments[index + 1] || null
                 const assessmentProgress = getProgressIndicator(assessment, prevAssessment)
-                const risk = riskColors[assessment.riskLevel]
-                
+                let risk = riskColors[assessment.riskLevel]
+                if (!risk) {
+                  console.warn("[ProfileStep] riskLevel inesperado en historial:", assessment.riskLevel)
+                  risk = riskColors["moderado"]
+                }
                 return (
                   <div
                     key={assessment.id}
