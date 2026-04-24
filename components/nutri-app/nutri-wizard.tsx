@@ -9,6 +9,7 @@ import { ConsentStep } from "./steps/consent-step"
 import { DataCaptureStep } from "./steps/data-capture-step"
 import { ResultsStep } from "./steps/results-step"
 import { ProfileStep } from "./steps/profile-step"
+import { apiGetConsent } from "@/lib/api"
 
 export interface UserData {
   gender: string           // Gender (Male/Female)
@@ -32,10 +33,11 @@ export interface UserData {
 
 
 function NutriWizardContent() {
-  const { isLoggedIn, logout, addAssessment } = useUser()
+  const { isLoggedIn, logout, addAssessment, token } = useUser()
   const [showWelcome, setShowWelcome] = useState(true)
   const [showProfile, setShowProfile] = useState(false)
   const [isNewAssessment, setIsNewAssessment] = useState(false)
+  const [needsConsent, setNeedsConsent] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
   const [userData, setUserData] = useState<UserData>({
     gender: "",
@@ -69,29 +71,26 @@ function NutriWizardContent() {
     setShowProfile(true)
   }
 
-  const handleStartNewAssessment = () => {
-    // Start a new assessment from profile
+  const handleStartNewAssessment = async () => {
+    // Check if user has consent before starting assessment
     setShowProfile(false)
     setIsNewAssessment(true)
-    setCurrentStep(1) // Start at step 1 of assessment flow (Captura de Datos)
+    setCurrentStep(1)
     setUserData({
-      gender: "",
-      age: "",
-      height: "",
-      weight: "",
-      familyHistory: "",
-      favc: "",
-      fcvc: "",
-      ncp: "",
-      caec: "",
-      smoke: "",
-      ch2o: "",
-      scc: "",
-      faf: "",
-      tue: "",
-      calc: "",
-      mtrans: "",
+      gender: "", age: "", height: "", weight: "",
+      familyHistory: "", favc: "", fcvc: "", ncp: "",
+      caec: "", smoke: "", ch2o: "", scc: "",
+      faf: "", tue: "", calc: "", mtrans: "",
     })
+    // Verify consent in backend
+    if (token) {
+      try {
+        const { exists } = await apiGetConsent(token)
+        setNeedsConsent(!exists)
+      } catch {
+        setNeedsConsent(true)
+      }
+    }
   }
 
   const goToNextStep = () => {
@@ -187,14 +186,20 @@ function NutriWizardContent() {
         <Header onProfileClick={() => { setShowProfile(true); setIsNewAssessment(false); }} />
         
         <main className="container mx-auto px-4 py-8 max-w-4xl">
-          {currentStep === 1 && (
+          {needsConsent && (
+            <ConsentStep
+              onNext={() => setNeedsConsent(false)}
+              onCancel={() => { setShowProfile(true); setIsNewAssessment(false); }}
+            />
+          )}
+          {!needsConsent && currentStep === 1 && (
             <DataCaptureStep
               userData={userData}
               setUserData={setUserData}
               onNext={goToNextStep}
             />
           )}
-          {currentStep === 2 && (
+          {!needsConsent && currentStep === 2 && (
             <ResultsStep userData={userData} onSaveResults={handleSaveResults} />
           )}
         </main>
